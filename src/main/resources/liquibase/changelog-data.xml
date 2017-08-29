@@ -16,6 +16,26 @@
         </insert>
     </changeSet>
 
+    <changeSet id="data-2" author="panferov">
+        <insert tableName="users">
+            <column name="username">user2@email.com</column>
+            <column name="password">123456</column>
+            <column name="enabled">true</column>
+            <column name="last_name">Романов</column>
+            <column name="first_name">Роман</column>
+            <column name="middle_name">Иванович</column>
+        </insert>
+    </changeSet>
+
+    <changeSet id="data-3" author="panferov">
+        <sql>
+            INSERT INTO account (currency, balance, user_id) VALUES ('RUB', 1000000, (SELECT user_id FROM users WHERE username = 'user1@email.com'));
+        </sql>
+        <sql>
+            INSERT INTO account (currency, balance, user_id) VALUES ('RUB', 1000000, (SELECT user_id FROM users WHERE username = 'user2@email.com'));
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
 
 
