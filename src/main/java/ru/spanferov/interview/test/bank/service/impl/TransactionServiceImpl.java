@@ -22,31 +22,49 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    public synchronized Transaction withdraw(Withdrawal withdrawal) {
-        accountService.withdraw(withdrawal.getFromAccountId(), withdrawal.getAmount());
-        withdrawal.setDateTime(LocalDateTime.now());
-        return transactionRepository.save(withdrawal);
-    }
-
-    @Override
-    @Transactional
-    public synchronized Transaction refill(Refill refill) {
-        accountService.refill(refill.getToAccountId(), refill.getAmount());
-        refill.setDateTime(LocalDateTime.now());
-        return transactionRepository.save(refill);
-    }
-
-    @Override
-    @Transactional
-    public synchronized Transaction transfer(Transfer transfer) {
-        Account from = accountService.withdraw(transfer.getFromAccountId(), transfer.getAmount());
-        Account to = accountService.read(transfer.getToAccountId());
-        if (!from.getCurrency().equals(to.getCurrency())) {
-            throw new BankException("Sorry, transfer to an account with a different currency not implemented yet...");
+    public Transaction withdraw(Withdrawal withdrawal) {
+        synchronized (withdrawal.getFromAccountId()) {
+            accountService.withdraw(withdrawal.getFromAccountId(), withdrawal.getAmount());
+            withdrawal.setDateTime(LocalDateTime.now());
+            return transactionRepository.save(withdrawal);
         }
-        accountService.refill(transfer.getToAccountId(), transfer.getAmount());
-        transfer.setDateTime(LocalDateTime.now());
-        return transactionRepository.save(transfer);
+    }
+
+    @Override
+    @Transactional
+    public Transaction refill(Refill refill) {
+        synchronized (refill.getToAccountId()) {
+            accountService.refill(refill.getToAccountId(), refill.getAmount());
+            refill.setDateTime(LocalDateTime.now());
+            return transactionRepository.save(refill);
+        }
+    }
+
+    @Override
+    @Transactional
+    public Transaction transfer(Transfer transfer) {
+
+        Long firstAccountId = transfer.getFromAccountId();
+        Long secondAccountId = transfer.getToAccountId();
+
+        if (firstAccountId.compareTo(secondAccountId) < 0) {
+            firstAccountId = transfer.getToAccountId();
+            secondAccountId = transfer.getFromAccountId();
+        }
+
+        synchronized (firstAccountId) {
+            synchronized (secondAccountId) {
+                Account from = accountService.withdraw(transfer.getFromAccountId(), transfer.getAmount());
+                Account to = accountService.read(transfer.getToAccountId());
+                if (!from.getCurrency().equals(to.getCurrency())) {
+                    throw new BankException("Sorry, transfer to an account with a different currency not implemented yet...");
+                }
+                accountService.refill(transfer.getToAccountId(), transfer.getAmount());
+                transfer.setDateTime(LocalDateTime.now());
+                return transactionRepository.save(transfer);
+            }
+        }
+
     }
 
 }

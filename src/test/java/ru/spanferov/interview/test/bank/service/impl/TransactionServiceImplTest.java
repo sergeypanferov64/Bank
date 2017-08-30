@@ -202,6 +202,48 @@ public class TransactionServiceImplTest {
         assertEquals("total balance before and after must be equal", totalSumBefore, totalSumAfter);
     }
 
+    @Test
+    public void concurrentDuplexTransfer() throws InterruptedException {
+
+        long totalSumBefore = accountService.getTotalBankBalance();
+
+        long testAmount = 1000;
+        long testFirstAccountId = 1;
+        long testSecondAccountId = 2;
+
+        ExecutorService executor = Executors.newFixedThreadPool(THREADS_NUMBER);
+        for (int i = 0; i < THREADS_NUMBER; i++) {
+            if (i % 2 == 0) {
+                executor.submit(() -> {
+                    for (int y = 0; y < ITERATIONS_NUMBER; y++) {
+                        executeTransfer(testFirstAccountId, testSecondAccountId, testAmount);
+                    }
+                });
+            } else {
+                executor.submit(() -> {
+                    for (int y = 0; y < ITERATIONS_NUMBER; y++) {
+                        executeTransfer(testSecondAccountId, testFirstAccountId, testAmount);
+                    }
+                });
+            }
+        }
+
+        executor.shutdown();
+
+        int timeOfAttempt = 5;
+        int attempts = 5;
+        boolean again = true;
+        while (!executor.awaitTermination(timeOfAttempt, TimeUnit.SECONDS) && again) {
+            attempts--;
+            again = attempts > 0 ? true : false;
+        }
+        assertTrue("tasks did not completed!", again);
+
+        long totalSumAfter = accountService.getTotalBankBalance();
+
+        assertEquals("total balance before and after must be equal", totalSumBefore, totalSumAfter);
+    }
+
     private void executeWithdraw(Long accountId, Long amount) {
         Withdrawal withdrawal = new Withdrawal();
         withdrawal.setFromAccountId(accountId);
