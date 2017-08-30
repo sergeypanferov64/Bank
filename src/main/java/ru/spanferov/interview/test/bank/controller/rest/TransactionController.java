@@ -18,7 +18,7 @@ public class TransactionController {
 
     @RequestMapping(method = RequestMethod.POST, produces = {"application/json"}, value = "/withdraw")
     public Transaction withdraw(@RequestBody Withdrawal withdrawal) {
-        if (withdrawal.getAmount() == null || withdrawal.getFromAccountId() == null) {
+        if (withdrawal.getAmount() == null || withdrawal.getFromAccountId() == null || withdrawal.getTransactionId() != null) {
             throw new BankException("Invalid request params");
         }
         return transactionService.withdraw(withdrawal);
@@ -26,7 +26,7 @@ public class TransactionController {
 
     @RequestMapping(method = RequestMethod.POST, produces = {"application/json"}, value = "/refill")
     public Transaction refill(@RequestBody Refill refill) {
-        if (refill.getAmount() == null || refill.getToAccountId() == null) {
+        if (refill.getAmount() == null || refill.getToAccountId() == null || refill.getTransactionId() != null) {
             throw new BankException("Invalid request params");
         }
         return transactionService.refill(refill);
@@ -34,7 +34,7 @@ public class TransactionController {
 
     @RequestMapping(method = RequestMethod.POST, produces = {"application/json"}, value = "/transfer")
     public Transaction transfer(@RequestBody Transfer transfer) {
-        if (transfer.getAmount() == null || transfer.getFromAccountId() == null || transfer.getToAccountId() == null) {
+        if (transfer.getAmount() == null || transfer.getFromAccountId() == null || transfer.getToAccountId() == null || transfer.getTransactionId() != null) {
             throw new BankException("Invalid request params");
         }
         return transactionService.transfer(transfer);
