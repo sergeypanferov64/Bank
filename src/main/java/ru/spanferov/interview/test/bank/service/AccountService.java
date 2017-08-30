@@ -16,4 +16,6 @@ public interface AccountService {
 
     Account refill(Long accountId, Long amount);
 
+    long getTotalBankBalance();
+
 }
